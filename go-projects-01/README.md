@@ -1,4 +1,4 @@
-# Практическая работа № 1/2/3/4/5. Знакомство с Go
+# Практическая работа № 1/2/3/4/5/6. Знакомство с Go
 
 Курс «Бэкенд-разработка на языке Go».
 
@@ -42,6 +42,12 @@
 В папке internal/persistance реализованы:
 - Load
 - Save
+
+**Практика 6:**
+- Подключился к БД
+- Заполнил БД
+- Тестирование
+- Выполнена самостоятельная часть
 
 ## Запуск первой программы (ПР1)
 
@@ -202,6 +208,16 @@ ID: 4
 }
 ```
 
+## sql (ПР6)
+```
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/01_schema.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/02_seed.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/03_select.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/04_mutations.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/05_verify.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/06_assert_constraints.sql
+docker compose exec -T db psql -X -v ON_ERROR_STOP=1 -U student -d tasks_lab -f /work/sql/07_homework.sql
+```
 ## Проверка сборки и оформления
 
 go test ./...
@@ -507,6 +523,56 @@ exit status 1
 ok      example.com/go-practice-01/internal/persistence (cached)
 ok      example.com/go-practice-01/internal/tasks       (cached)
 ```
+
+**Практика 6:**
+
+```
+INSERT INTO tasks (project_id, title, priority)
+VALUES (999999, 'Несуществующий проект', 2);
+
+ERROR:  insert or update on table "tasks" violates foreign key constraint "tasks_project_id_fkey"
+DETAIL:  Key (project_id)=(999999) is not present in table "projects".
+
+
+INSERT INTO tasks (project_id, title, priority)
+SELECT id, 'Слишком высокий приоритет', 9
+FROM projects WHERE name = 'Учебный бэкенд';
+
+ERROR:  new row for relation "tasks" violates check constraint "tasks_priority_check"
+DETAIL:  Failing row contains (11, 1, Слишком высокий приоритет, new, 9, 2026-11-24 11:18:49.358646+00).
+
+
+INSERT INTO projects (name) VALUES ('   ');
+
+ERROR:  new row for relation "projects" violates check constraint "projects_name_check"
+DETAIL:  Failing row contains (4,    , 2026-11-24 11:19:13.30959+00).
+
+
+DELETE FROM projects WHERE name = 'Учебный бэкенд';
+
+ERROR:  update or delete on table "projects" violates foreign key constraint "tasks_project_id_fkey" on table "tasks"
+DETAIL:  Key (id)=(1) is still referenced from table "tasks".
+
+
+INSERT INTO projects (name) VALUES ('Учебный бэкенд');
+
+ERROR:  duplicate key value violates unique constraint "projects_name_key"
+DETAIL:  Key (name)=(Учебный бэкенд) already exists.
+
+SELECT COUNT(*) FROM projects;
+ count
+-------
+     2
+(1 row)
+
+SELECT COUNT(*) FROM tasks;
+ count
+-------
+     4
+(1 row)
+
+```
+
 ## Что осталось сделать
 
 Все обязательные задания выполнены.
